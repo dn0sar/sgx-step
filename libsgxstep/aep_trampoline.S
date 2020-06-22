@@ -18,20 +18,26 @@
  *  along with SGX-Step. If not, see <http://www.gnu.org/licenses/>.
  */
 
+ /* Modified by Ivan Puddu <ivan.puddu@inf.ethz.ch> on 15.11.2019 */
+
 /* 32-bit compatibility ~~following Intel SGX-SDK convention. */
 #if defined(M32)
     #define xax  eax
     #define xbx  ebx
     #define xcx  ecx
     #define xdi  edi
+    #define xsi  esi
     #define movx movl
 #else
     #define xax  rax
     #define xbx  rbx
     #define xcx  rcx
     #define xdi  rdi
+    #define xsi  rsi
     #define movx movq
 #endif
+
+#define APIC_TMICT                  0x380
 
 /* 
  * ---------------------------------------------------------------------
@@ -58,8 +64,21 @@ sgx_step_aep_trampoline:
 
 .Leresume:
     add $1, sgx_step_eresume_cnt(%rip)
+
     mov sgx_step_tcs(%rip), %xbx              /* TCS address */
     lea sgx_step_aep_trampoline(%rip), %xcx   /* AEP address */
+    
+    lea apic_base(%rip), %xsi
+    mov (%xsi), %xsi
+    test %xsi, %xsi 
+    je .Lcheckapic          # in the unlikely case in which apic_base was not set, call apic_init
+    mov %xax, %xdi          # cpuid below is going to overwrite rax, so move it to rdi
+    test %xdi, %xdi
+    je .Leresumebottom
+    # Arm the counter if the value returned before was not 0
+    movl %edi, APIC_TMICT(%xsi)
+
+.Leresumebottom:
 
     prefetch nemesis_tsc_eresume(%rip)
     mfence
@@ -69,3 +88,11 @@ sgx_step_aep_trampoline:
 
     mov $3, %xax                        /* ERESUME leaf */
     .byte 0x0f, 0x01, 0xd7              /* ENCLU */
+
+
+.Lcheckapic:
+    push %xax
+    callq apic_init
+    sub $1, sgx_step_eresume_cnt(%rip)
+    pop %xax
+    jmp .Leresume

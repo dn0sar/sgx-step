@@ -18,6 +18,8 @@
  *  along with SGX-Step. If not, see <http://www.gnu.org/licenses/>.
  */
 
+ /* Modified by Ivan Puddu <ivan.puddu@inf.ethz.ch> on 15.11.2019 */
+
 #define _FILE_OFFSET_BITS 64
 #include "pt.h"
 #include "apic.h"
@@ -43,7 +45,10 @@ void step_open( void )
 { 
     if (fd_step == -1)
     {
-        ASSERT((fd_step = open("/dev/sgx-step", O_RDWR)) >= 0);
+        if ((fd_step = open("/dev/sgx-step", O_RDWR)) < 0) {
+			error("Could not open the SGX-Step driver, please check that the kernel module is loaded.");
+        	exit(-2);
+		}
         libsgxstep_info("/dev/sgx-step opened!");
     }
 }

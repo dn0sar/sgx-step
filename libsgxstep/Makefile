@@ -18,6 +18,8 @@ ifeq ($(M32), 1)
 	CFLAGS += -m32 -DM32=1
 endif
 
+CFLAGS += -DSGX_STEP_TIMER_INTERVAL=${SGX_STEP_TIMER_INTERVAL}
+
 INCLUDE     = -I$(SGX_SDK)/include/
 SOURCES     = $(shell ls *.c)
 ASM         = $(shell ls *.S)

@@ -18,6 +18,8 @@
  *  along with SGX-Step. If not, see <http://www.gnu.org/licenses/>.
  */
 
+ /* Modified by Ivan Puddu <ivan.puddu@inf.ethz.ch> on 15.11.2019 */
+
 #ifndef SGX_STEP_DEBUG_H
 #define SGX_STEP_DEBUG_H
 
@@ -25,6 +27,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+
+#define ANSI_COLOR_RED      "\x1b[31m"
+#define ANSI_COLOR_ORANGE   "\x1b[33m"
+#define ANSI_COLOR_RESET    "\x1b[0m"
 
 #if !NO_SGX
 #include <sgx_error.h>
@@ -48,11 +54,18 @@ extern sgx_status_t sgx_step_rv;
         }                                                               \
     } while(0)
 
-#define info(msg, ...)                                                  \
+#define print_format(msg, color, ...)                                   \
     do {                                                                \
-        printf("[" __FILE__ "] " msg "\n", ##__VA_ARGS__);              \
+        printf("[" __FILE__ "] " color msg ANSI_COLOR_RESET "\n",       \
+         ##__VA_ARGS__);                                                \
         fflush(stdout);                                                 \
     } while(0)
+
+#define info(msg, ...) print_format(msg, "", ##__VA_ARGS__)
+#define warning(msg, ...) print_format(msg,                             \
+                ANSI_COLOR_ORANGE "WARNING: ", ##__VA_ARGS__)
+#define error(msg, ...) print_format(msg,                               \
+                ANSI_COLOR_RED "ERROR: ", ##__VA_ARGS__)
 
 #if LIBSGXSTEP_SILENT
     #define libsgxstep_info(msg, ...)
