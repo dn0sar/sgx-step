@@ -18,6 +18,8 @@
  *  along with SGX-Step. If not, see <http://www.gnu.org/licenses/>.
  */
 
+ /* Modified by Ivan Puddu <ivan.puddu@inf.ethz.ch> on 15.11.2019 */
+
 #include "apic.h"
 #include "pt.h"
 #include "cpu.h"
@@ -70,10 +72,10 @@ int apic_timer_oneshot(uint8_t vector)
     apic_tdcr = apic_read(APIC_TDCR);
 
     apic_write(APIC_LVTT, vector | APIC_LVTT_ONESHOT);
-    apic_write(APIC_TDCR, APIC_TDR_DIV_2);
+    apic_write(APIC_TDCR, APIC_TDR_DIV_1);
     // NOTE: APIC seems not to handle divide by 1 properly (?)
     // see also: http://wiki.osdev.org/APIC_timer)
-    libsgxstep_info("APIC timer one-shot mode with division 2 (lvtt=%x/tdcr=%x)",
+    libsgxstep_info("APIC timer one-shot mode with division 1 (lvtt=%x/tdcr=%x)",
         apic_read(APIC_LVTT), apic_read(APIC_TDCR));
 }
 

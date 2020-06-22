@@ -18,6 +18,8 @@
  *  along with SGX-Step. If not, see <http://www.gnu.org/licenses/>.
  */
 
+ /* Modified by Ivan Puddu <ivan.puddu@inf.ethz.ch> on 15.11.2019 */
+
 #ifndef SGX_STEP_CONFIG
 #define SGX_STEP_CONFIG
 
@@ -36,6 +38,8 @@
 #define NUM_CORES                   4
 #define SPY_CPU                     (VICTIM_CPU + NUM_CORES)
 
+
+#ifndef SGX_STEP_TIMER_INTERVAL
 /*
  * XXX Configure APIC timer interval for next interrupt.
  *
@@ -47,9 +51,10 @@
 #define DELL_INSPIRON_7359          1
 #define DELL_OPTIPLEX_7040          2
 #define DELL_LATITUDE_7490          3
-#define I9_9900K	            4
+#define ACER_ASPIRE_V15             4
+#define I9_9900K	                5
 #if (SGX_STEP_PLATFORM == DELL_INSPIRON_7359)
-    #define SGX_STEP_TIMER_INTERVAL 25
+    #define SGX_STEP_TIMER_INTERVAL 43
 #elif (SGX_STEP_PLATFORM == DELL_LATITUDE_7490)
     #define SGX_STEP_TIMER_INTERVAL 36
 #elif (SGX_STEP_PLATFORM == DELL_OPTIPLEX_7040)
@@ -60,6 +65,8 @@
     #define SGX_STEP_TIMER_INTERVAL 21
 #else
     #warning Unsupported SGX_STEP_PLATFORM; configure timer interval manually...
+#endif
+
 #endif
 
 #endif

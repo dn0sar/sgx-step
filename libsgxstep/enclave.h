@@ -18,6 +18,8 @@
  *  along with SGX-Step. If not, see <http://www.gnu.org/licenses/>.
  */
 
+ /* Modified by Ivan Puddu <ivan.puddu@inf.ethz.ch> on 15.11.2019 */
+
 #ifndef SGX_STEP_ENCLAVE_H
 #define SGX_STEP_ENCLAVE_H
 #if !NO_SGX
@@ -27,7 +29,7 @@
 extern uint32_t nemesis_tsc_eresume, nemesis_tsc_aex;
 extern int sgx_step_eresume_cnt;
 
-typedef void (*aep_cb_t)(void);
+typedef uint64_t (*aep_cb_t)(void);
 void register_aep_cb(aep_cb_t cb);
 
 void register_enclave_info(void);
