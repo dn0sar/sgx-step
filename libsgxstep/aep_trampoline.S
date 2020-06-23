@@ -18,7 +18,11 @@
  *  along with SGX-Step. If not, see <http://www.gnu.org/licenses/>.
  */
 
- /* Modified by Ivan Puddu <ivan.puddu@inf.ethz.ch> on 15.11.2019 */
+ /*
+  * Modified by Ivan Puddu <ivan.puddu@inf.ethz.ch> on 15.11.2019
+  * Modified by Miro Haller <miro.haller@alumni.ethz.ch> on 23.06.2020
+  * (reintroducing changes from Spring 2019)
+  */
 
 /* 32-bit compatibility ~~following Intel SGX-SDK convention. */
 #if defined(M32)
@@ -65,30 +69,29 @@ sgx_step_aep_trampoline:
 .Leresume:
     add $1, sgx_step_eresume_cnt(%rip)
 
-    mov sgx_step_tcs(%rip), %xbx              /* TCS address */
-    lea sgx_step_aep_trampoline(%rip), %xcx   /* AEP address */
-    
+    prefetch nemesis_tsc_eresume(%rip)
+
     lea apic_base(%rip), %xsi
     mov (%xsi), %xsi
     test %xsi, %xsi 
     je .Lcheckapic          # in the unlikely case in which apic_base was not set, call apic_init
-    mov %xax, %xdi          # cpuid below is going to overwrite rax, so move it to rdi
+    mov %xax, %xdi          # cpuid in .Leresumebottom overwrites rax, so move it to rdi
     test %xdi, %xdi
     je .Leresumebottom
     # Arm the counter if the value returned before was not 0
     movl %edi, APIC_TMICT(%xsi)
 
 .Leresumebottom:
-
-    prefetch nemesis_tsc_eresume(%rip)
-    mfence
-
+    /* Serialize all instructions before taking timestamp */
+    cpuid
     rdtsc
     mov %eax, nemesis_tsc_eresume(%rip)
 
+    mov sgx_step_tcs(%rip), %xbx              /* TCS address */
+    lea sgx_step_aep_trampoline(%rip), %xcx   /* AEP address */
+
     mov $3, %xax                        /* ERESUME leaf */
     .byte 0x0f, 0x01, 0xd7              /* ENCLU */
-
 
 .Lcheckapic:
     push %xax
@@ -96,3 +99,4 @@ sgx_step_aep_trampoline:
     sub $1, sgx_step_eresume_cnt(%rip)
     pop %xax
     jmp .Leresume
+
