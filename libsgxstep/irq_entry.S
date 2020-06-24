@@ -9,10 +9,6 @@
     .global sgx_step_irq_entry
     .type sgx_step_irq_entry,@function
 sgx_step_irq_entry:
-    # Check if coming from kernel space, if so just do IRET
-    testb   $3, CS(%rsp)
-    jz exit // Interrupt coming from kernel space, don't do anything, IRET asap
-
     /* Manually save rcx, rbx as cpuid overwrites them */
     mov %rcx, %r14
     mov %rbx, %r15
