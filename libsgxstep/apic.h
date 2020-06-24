@@ -64,7 +64,7 @@
 #endif
 
 #define _EXP_DIV(x) APIC_TDR_DIV_##x
-#define SELECT_DIVISOR(x) _EXP_VAR(x)
+#define SELECT_DIVISOR(x) _EXP_DIV(x)
 
 // Set the DIV factor that will be used
 #define APIC_TDR_DIV_SET  SELECT_DIVISOR(DIVISOR_VALUE)
