@@ -41,7 +41,8 @@ void edbgrdwr(void *adrs, void* res, int len, int write);
 #define edbgwr(adrs, res, len)  edbgrdwr(adrs, res, len, 1)
 
 /* NOTE: incorrect GPRSGX size in Intel manual vol. 3D June 2016 p.38-7 */
-#define SGX_TCS_OSSA_OFFSET         16
+#define SGX_TCS_FLAGS_OFFSET        8ULL
+#define SGX_TCS_OSSA_OFFSET         16ULL
 #define SGX_GPRSGX_SIZE             184
 #define SGX_GPRSGX_RIP_OFFSET       136
 
@@ -91,6 +92,7 @@ void dump_gprsgx_region(gprsgx_region_t *gprsgx_region);
 
 uint64_t edbgrd_ssa(int ssa_field_offset);
 #define edbgrd_erip() edbgrd_ssa(SGX_GPRSGX_RIP_OFFSET)
+void set_tcs_dbflag(uint64_t flag);
 
 #endif
 #endif
