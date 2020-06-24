@@ -57,6 +57,18 @@
 #define APIC_ICR_LEVEL_ASSERT   (0x1 << 14)
 #define APIC_ICR_DEST_SELF      (0x1 << 18)
 
+// Define this variable in the Makefile to
+// change the divisor used
+#ifndef DIVISOR_VALUE
+    #define DIVISOR_VALUE 1
+#endif
+
+#define _EXP_DIV(x) APIC_TDR_DIV_##x
+#define SELECT_DIVISOR(x) _EXP_VAR(x)
+
+// Set the DIV factor that will be used
+#define APIC_TDR_DIV_SET  SELECT_DIVISOR(DIVISOR_VALUE)
+
 extern void* apic_base;
 extern uint32_t apic_lvtt;
 void apic_init(void);
