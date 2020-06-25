@@ -6,8 +6,16 @@ ifeq ($(SGX_SDK),)
     SGX_SDK          = /opt/intel/sgxsdk
 endif
 export SGX_SDK
-ifneq ($(SGX_SDK), /opt/intel/sgxsdk)
-    URTS_LD_LIBRARY_PATH = LD_LIBRARY_PATH=$(LIBSGXSTEP_DIR)/linux-sgx/psw/urts/linux
+
+ifndef URTS_LD_LIBRARY_PATH
+    ifneq ($(SGX_SDK), /opt/intel/sgxsdk)
+        URTS_LD_LIBRARY_PATH = LD_LIBRARY_PATH=$(LIBSGXSTEP_DIR)/linux-sgx/psw/urts/linux
+    endif
+endif
+
+ifdef SGX_STEP_TIMER_INTERVAL
+    CFLAGS += -DSGX_STEP_TIMER_INTERVAL=${SGX_STEP_TIMER_INTERVAL}
+    export SGX_STEP_TIMER_INTERVAL
 endif
 
 ENCLAVE              = Enclave
@@ -41,14 +49,6 @@ CLEANDIRS            = $(SUBDIRS:%=clean-%)
 
 ATTACK = 1
 PARSE  = nop
-ifeq ($(STRLEN), 1)
-    ATTACK = 2
-    PARSE  = strlen
-endif
-ifeq ($(ZIGZAG), 1)
-    ATTACK = 3
-    PARSE  = zz
-endif
 
 ifeq ($(NUM),)
     NUM             = 100

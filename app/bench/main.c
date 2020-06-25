@@ -18,6 +18,15 @@
  *  along with SGX-Step. If not, see <http://www.gnu.org/licenses/>.
  */
 
+/*
+ * Modified by Miro Haller <miro.haller@alumni.ethz.ch> to both include improvements
+ * (see thesis https://github.com/Miro-H/sgx-accurate-time-msrmts) and be compatible
+ * with our adapted version of SGX-Step.
+ *
+ * This is intended as a simple example of how to use those improvements and therefore
+ * only implements the MICROBENCH attack scenario.
+ */
+
 #include <sgx_urts.h>
 #include "Enclave/encl_u.h"
 #include <signal.h>
@@ -31,16 +40,24 @@
 #include "libsgxstep/idt.h"
 #include "libsgxstep/config.h"
 
-#ifndef NUM_RUNS
-    #define NUM_RUNS                100
+#ifndef SGX_STEP_TIMER_INTERVAL
+    #error The SGX_STEP_TIMER_INTERVAL variable must be defined at compile time.
+    // The following line just suppresses other compile errors that derive from this
+    // So that the compilation output is a bit more clean
+    #define SGX_STEP_TIMER_INTERVAL 0
 #endif
 
-#define MICROBENCH                  1
-#define STRLEN                      2
-#define ZIGZAGGER                   3
-#ifndef ATTACK_SCENARIO
-    #define ATTACK_SCENARIO         MICROBENCH
+#ifndef NUM_RUNS
+    #define NUM_RUNS 100
 #endif
+
+#define ZERO_STEP_PERCENTAGE 10
+
+
+
+uint8_t *do_cnt_instr;
+uint8_t do_cnt_instr_old;
+uint64_t instr_cnt;
 
 sgx_enclave_id_t eid = 0;
 int strlen_nb_access = 0;
@@ -49,25 +66,41 @@ uint64_t *pte_encl = NULL;
 uint64_t *pte_str_encl = NULL;
 uint64_t *pmd_encl = NULL;
 
+typedef struct measurement_t {
+    uint64_t cycles;
+    uint32_t page_nr;
+    uint8_t accessed;
+} measurement;
+
+measurement *log_arr;
+
+uint64_t log_arr_size;
+uint64_t log_arr_idx;
+
+
+/* ======================= HELPER FUNCTIONS ======================= */
+void init_time_measurement() 
+{
+    int i;
+
+    instr_cnt           = 0;
+    do_cnt_instr_old    = 0;
+    log_arr_size        = (NUM_RUNS * (100 + ZERO_STEP_PERCENTAGE) ) / 100;
+
+    ASSERT( do_cnt_instr = (uint8_t *) calloc( 1, sizeof(uint8_t) ) );
+    ASSERT( log_arr = (measurement *) calloc( log_arr_size, sizeof(measurement) ) );
+}
+
 /* ================== ATTACKER IRQ/FAULT HANDLERS ================= */
 
 /* Called before resuming the enclave after an Asynchronous Enclave eXit. */
-void aep_cb_func(void)
+uint64_t aep_cb_func(void)
 {
     uint64_t erip = edbgrd_erip() - (uint64_t) get_enclave_base();
     info("^^ enclave RIP=%#llx; ACCESSED=%d", erip, ACCESSED(*pte_encl));
     irq_cnt++;
 
     /* XXX insert custom attack-specific side-channel observation code here */
-    #if (ATTACK_SCENARIO == STRLEN)
-        ASSERT( pte_str_encl );
-        if (ACCESSED(*pte_str_encl))
-        {
-            info("accessed!");
-            strlen_nb_access++;
-        }
-        *pte_str_encl = MARK_NOT_ACCESSED( *pte_str_encl );
-    #endif
 
     if (do_irq && (irq_cnt > NUM_RUNS*500))
     {
@@ -95,8 +128,9 @@ void aep_cb_func(void)
     if (do_irq)
     {
         *pmd_encl = MARK_NOT_ACCESSED( *pmd_encl );
-        apic_timer_irq( SGX_STEP_TIMER_INTERVAL );
+        return SGX_STEP_TIMER_INTERVAL;
     }
+    return 0;
 }
 
 /* Called upon SIGSEGV caused by untrusted page tables. */
