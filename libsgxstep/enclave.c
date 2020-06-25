@@ -114,6 +114,11 @@ void* get_enclave_ssa_gprsgx_adrs(void)
     return get_enclave_base() + ossa + SGX_SSAFRAMESIZE - SGX_GPRSGX_SIZE;
 }
 
+void set_tcs_dbflag(uint64_t flag) {
+    uint64_t tcs = (uint64_t) sgx_get_tcs();
+    edbgwr((void *)((unsigned char *)tcs + SGX_TCS_FLAGS_OFFSET), &flag, sizeof(uint64_t)); 
+}
+
 void print_enclave_info(void)
 {
     uint64_t read = 0xff;
@@ -129,6 +134,8 @@ void print_enclave_info(void)
     /* First 8 bytes of TCS must be zero */
     edbgrd( sgx_get_tcs(), &read, 8);
     printf( "    EDBGRD: %s\n", read ? "production" : "debug");
+    edbgrd( sgx_get_tcs() + SGX_TCS_FLAGS_OFFSET, &read, 8);
+    printf( "    DBGOPTIN: %lu\n", read);
 }
 
 void dump_gprsgx_region(gprsgx_region_t *gprsgx_region)

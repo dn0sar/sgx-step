@@ -3,12 +3,17 @@
 #include "apic.h"
 #include "sched.h"
 
+// memcpy
+#include <string.h>
+
 /* See irq_entry.S to see how these are used. */
 extern void sgx_step_irq_entry(void);
 extern void sgx_step_irq_gate_func(void);
 irq_cb_t sgx_step_irq_cb_table[256] = {0};
 exec_priv_cb_t sgx_step_irq_gate_cb = NULL;
 uint8_t sgx_step_vector_hack = 0;
+uint8_t *original_gate = NULL;
+int saved_vec = -1;
 
 void dump_gate(gate_desc_t *gate, int idx)
 {
@@ -59,6 +64,15 @@ void install_user_irq_handler(idt_t *idt, irq_cb_t handler, int vector)
     ASSERT(vector >= 0 && vector < idt->entries);
 
     gate_desc_t *gate = gate_ptr(idt->base, vector);
+
+    if (original_gate == NULL) {
+        // Save the original system vector
+        saved_vec = vector;
+        original_gate = (uint8_t *)malloc(sizeof(gate_desc_t));
+        memcpy(original_gate, (void *)gate, sizeof(gate_desc_t));
+    }
+
+
     gate->offset_low    = PTR_LOW(sgx_step_irq_entry);
     gate->offset_middle = PTR_MIDDLE(sgx_step_irq_entry);
     gate->offset_high   = PTR_HIGH(sgx_step_irq_entry);
@@ -90,6 +104,14 @@ void install_kernel_irq_handler(idt_t *idt, void *asm_handler, int vector)
     ASSERT(vector >= 0 && vector < idt->entries);
 
     gate_desc_t *gate = gate_ptr(idt->base, vector);
+
+    if (original_gate == NULL) {
+        // Save the original system vector
+        saved_vec = vector;
+        original_gate = (uint8_t *)malloc(sizeof(gate_desc_t));
+        memcpy(original_gate, (void *)gate, sizeof(gate_desc_t));
+    }
+
     gate->offset_low    = PTR_LOW(asm_handler);
     gate->offset_middle = PTR_MIDDLE(asm_handler);
     gate->offset_high   = PTR_HIGH(asm_handler);
@@ -124,3 +146,22 @@ void exec_priv(exec_priv_cb_t cb)
     sgx_step_irq_gate_cb = cb;
     asm("int %0\n\t" ::"i"(IRQ_VECTOR+4):);
 }
+
+
+void remove_custom_irq_handler(idt_t *idt, int vector) {
+    ASSERT(vector >= 0 && vector < idt->entries);
+
+    gate_desc_t *gate    = gate_ptr(idt->base, vector);
+
+    if (saved_vec == vector && original_gate != NULL) {
+        saved_vec = -1;
+        memcpy(gate, original_gate, sizeof(gate_desc_t));
+        free(original_gate);
+        original_gate = NULL;
+        info("Restored previous system IRQ handler");
+    } else {
+        warning("Could not restore default handler for vector %d. No gate saved.", vector);
+    }
+
+}
+
