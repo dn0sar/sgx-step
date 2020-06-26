@@ -1,4 +1,5 @@
 /*
+/*
  *  This file is part of the SGX-Step enclave execution control framework.
  *
  *  Copyright (C) 2017 Jo Van Bulck <jo.vanbulck@cs.kuleuven.be>,
@@ -29,6 +30,10 @@
 extern uint32_t nemesis_tsc_eresume, nemesis_tsc_aex;
 extern int sgx_step_eresume_cnt;
 
+// NOTE: We changed the interface so that the APIC timer is now
+// set in aep_trampoline.S and not in the aep_cb. The APIC
+// counter will be set to the value returned by the function
+// implementing the aep_cb
 typedef uint64_t (*aep_cb_t)(void);
 void register_aep_cb(aep_cb_t cb);
 
