@@ -18,44 +18,21 @@
  *  along with SGX-Step. If not, see <http://www.gnu.org/licenses/>.
  */
 
+/*
+ * Modified by Miro Haller <miro.haller@alumni.ethz.ch> for a simplified MICROBENCH
+ * attack scenario.
+ */
+
 #include <stdint.h>
 #include <string.h>
 
-// see asm.S
-extern char secret_str;
-extern void zigzag_bench(uint64_t nb);
-
 // see asm_nop.S
-extern void asm_microbenchmark(void);
-extern int my_strlen(const char *str);
+extern void asm_microbenchmark(uint8_t *do_cnt_instr);
+extern void asm_microbenchmark_end(void);
 
-void do_nop_slide(void)
+void do_nop_slide(uint8_t *do_cnt_instr)
 {
-    asm_microbenchmark();
-}
-
-int a, b;
-
-void do_zigzagger(int n)
-{
-    a = 1;
-    b = 0;
-    zigzag_bench(n);
-}
-
-int do_strlen(int n)
-{
-    int i, j;
-
-    for (i=0; i < n; i++)
-        j = my_strlen(&secret_str);
-
-    return j;
-}
-
-void *get_str_adrs( void )
-{
-    return &secret_str;
+    asm_microbenchmark(do_cnt_instr);
 }
 
 void *get_nop_adrs( void )
@@ -63,12 +40,7 @@ void *get_nop_adrs( void )
     return asm_microbenchmark;
 }
 
-void *get_zz_adrs(void)
+void *get_nop_end_adrs( void )
 {
-    return zigzag_bench;
-}
-
-void *get_strlen_adrs(void)
-{
-    return my_strlen;
+    return asm_microbenchmark_end;
 }
