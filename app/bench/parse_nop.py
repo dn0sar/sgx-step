@@ -1,5 +1,10 @@
 #!/usr/bin/python3
 
+#
+# Slightly modified by Miro Haller <miro.haller@alumni.ethz.ch> for a simplified
+# MICROBENCH attack scenario.
+#
+
 import re
 import sys
 from elftools.elf.elffile import ELFFile
@@ -19,7 +24,12 @@ with open( ENCLAVE_FILE ,'rb') as f:
     sym = symtab.get_symbol_by_name(INST_SLIDE_SYM)
     inst_slide_start = sym[0]['st_value']
 
-INST_SLIDE_START = inst_slide_start
+# In the nop slide, the first instruction 'movb $1, (%rdi)' starts the counting
+# and is not a measured nop, this we skip it.
+# XXX: Note that for more sophisticated test cases, with multiple sections of
+# measured code, the parsing must be more sophisticated and differentiate between
+# measured instructions and others (measurement instructions, preparation, ...)
+INST_SLIDE_START = inst_slide_start + 3
 INST_SLIDE_LEN   = int(sys.argv[1])
 INST_SLIDE_END   = INST_SLIDE_START + INST_SLIDE_LEN
 print("parse_nop.py: found instruction slide at {} (length={})".format(hex(INST_SLIDE_START), INST_SLIDE_LEN))
@@ -28,7 +38,7 @@ count_tot  = 0
 count_zero = 0
 count_one  = 0
 count_plus = 0
-prev       = 0
+prev       = INST_SLIDE_START
 
 with open(IN_FILE, 'r') as fi, open(OUT_FILE, 'w') as fo:
     for line in fi:
@@ -36,7 +46,7 @@ with open(IN_FILE, 'r') as fi, open(OUT_FILE, 'w') as fo:
         if m:
             cur = int(m.groups()[0], base=16) 
             a = int(m.groups()[1]) 
-            if (cur >= INST_SLIDE_START) and (cur <= INST_SLIDE_END):
+            if (cur > INST_SLIDE_START) and (cur <= INST_SLIDE_END):
                 diff = cur - prev
                 if prev:
                     fo.write(str(diff) + '\n')

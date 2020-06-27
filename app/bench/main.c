@@ -197,7 +197,8 @@ uint64_t aep_cb_func(void)
 
     #if EDBGRD
         uint64_t erip = edbgrd_erip() - (uint64_t) get_enclave_base();
-        info("^^ enclave RIP=%#llx; ACCESSED=%d", erip, ACCESSED(*curr_pte_encl));
+        info("^^ enclave RIP=%#llx; ACCESSED=%d", erip,
+             ACCESSED(*curr_pte_encl) || ACCESSED(*next_pte_encl));
     #endif
 
     irq_cnt++;

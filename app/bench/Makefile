@@ -66,8 +66,13 @@ run: clean all
 	sudo $(URTS_LD_LIBRARY_PATH) ./app > out.txt
 	cat out.txt
 
+ifeq ($(EDBGRD), 1)
 parse: run
 	SGX_STEP_PLATFORM=$(SGX_STEP_PLATFORM) ./parse_$(PARSE).py $(NUM)
+else
+parse:
+	$(error EDBGRD must be set to one for 'make parse', for EDBGRD = 0 use make run)
+endif
 
 $(OUTPUT): $(BUILDDIRS) $(OBJECTS)
 	echo "$(INDENT)[LD]" $(OBJECTS) $(LIBS) -o $(OUTPUT)
