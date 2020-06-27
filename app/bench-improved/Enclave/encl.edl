@@ -1,0 +1,12 @@
+enclave {
+	
+	trusted {
+   	    public void  do_nop_slide( [user_check] uint8_t *do_cnt_instr );
+
+        public void  *get_nop_adrs( void );
+        public void  *get_nop_end_adrs( void );
+	};
+	
+	untrusted {
+	};
+};

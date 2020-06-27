@@ -1,13 +1,31 @@
 LIBSGXSTEP_DIR       = ../..
 LIBSGXSTEP           = $(LIBSGXSTEP_DIR)/libsgxstep
 -include $(LIBSGXSTEP)/Makefile.config
+-include Makefile.config
 
 ifeq ($(SGX_SDK),)
     SGX_SDK          = /opt/intel/sgxsdk
 endif
 export SGX_SDK
-ifneq ($(SGX_SDK), /opt/intel/sgxsdk)
-    URTS_LD_LIBRARY_PATH = LD_LIBRARY_PATH=$(LIBSGXSTEP_DIR)/linux-sgx/psw/urts/linux
+
+ifndef URTS_LD_LIBRARY_PATH
+    ifneq ($(SGX_SDK), /opt/intel/sgxsdk)
+        URTS_LD_LIBRARY_PATH = LD_LIBRARY_PATH=$(LIBSGXSTEP_DIR)/linux-sgx/psw/urts/linux
+    endif
+endif
+
+ifdef SGX_STEP_TIMER_INTERVAL
+    CFLAGS += -DSGX_STEP_TIMER_INTERVAL=${SGX_STEP_TIMER_INTERVAL}
+    export SGX_STEP_TIMER_INTERVAL
+endif
+
+export NUM
+
+ifdef DEFAULT
+    CFLAGS  += -DATTACK_SCENARIO=$(ATTACK_SCENARIO) -DNUM_RUNS=$(NUM) \
+               -DEDBGRD=$(EDBGRD) -DDBIRQ=$(DBIRQ) -DPAGE_SIZE=$(PAGE_SIZE) \
+               -DPAGES_PER_PMD=$(PAGES_PER_PMD) -DPAGES_PER_PMD=$(PAGES_PER_PMD) \
+               -DDEFAULT=$(DEFAULT) -DZERO_STEP_PERCENTAGE=$(ZERO_STEP_PERCENTAGE)
 endif
 
 ENCLAVE              = Enclave
@@ -39,37 +57,26 @@ OUTPUT               = app
 BUILDDIRS            = $(SUBDIRS:%=build-%)
 CLEANDIRS            = $(SUBDIRS:%=clean-%)
 
-ATTACK = 1
 PARSE  = nop
-ifeq ($(STRLEN), 1)
-    ATTACK = 2
-    PARSE  = strlen
-endif
-ifeq ($(ZIGZAG), 1)
-    ATTACK = 3
-    PARSE  = zz
-endif
-
-ifeq ($(NUM),)
-    NUM             = 100
-endif
-export NUM
-
-CFLAGS              += -DATTACK_SCENARIO=$(ATTACK) -DNUM_RUNS=$(NUM)
 
 .SILENT:
 all: $(OUTPUT)
-	
+
 run: clean all
 	sudo $(URTS_LD_LIBRARY_PATH) ./app > out.txt
 	cat out.txt
 
+ifeq ($(EDBGRD), 1)
 parse: run
 	SGX_STEP_PLATFORM=$(SGX_STEP_PLATFORM) ./parse_$(PARSE).py $(NUM)
+else
+parse:
+	$(error EDBGRD must be set to one for 'make parse', for EDBGRD = 0 use make run)
+endif
 
 $(OUTPUT): $(BUILDDIRS) $(OBJECTS)
-	echo "$(INDENT)[LD]" $(OBJECTS) $(LIBS) -o $(OUTPUT) 
-	$(LD) $(OBJECTS) $(LDFLAGS) -o $(OUTPUT) 
+	echo "$(INDENT)[LD]" $(OBJECTS) $(LIBS) -o $(OUTPUT)
+	$(LD) $(OBJECTS) $(LDFLAGS) -o $(OUTPUT)
 
 %.o : %.c
 	echo "$(INDENT)[CC] " $<
