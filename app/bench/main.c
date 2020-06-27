@@ -165,7 +165,7 @@ void finish_time_measurement()
  * Convenient shortcut to write constant time code using the low level assembly
  * instruction 'cmov'.
  */
-inline uint64_t cmov64(uint8_t pred, uint64_t source, uint64_t new_val)
+static inline uint64_t cmov64(uint8_t pred, uint64_t source, uint64_t new_val)
 {
     __asm__(
         "testb %1, %1;"
@@ -281,7 +281,7 @@ uint64_t aep_cb_func(void)
          * Note: Prefetching next page is a bad idea, since this sometimes
          * evicts data used by the enclave which creates double peaks.
          */
-        __asm__ __volatile__("\tprefetcht0 (curr_pte_encl)\n" ::);
+        __asm__ __volatile__("\tprefetcht0 curr_pte_encl(%%rip)\n" ::);
 
         // Serializing helps to reduce variance
         __asm__ __volatile__("\tcpuid\n" ::);
