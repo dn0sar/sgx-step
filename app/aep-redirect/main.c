@@ -18,6 +18,11 @@
  *  along with SGX-Step. If not, see <http://www.gnu.org/licenses/>.
  */
 
+/*
+ * Slighly adapted by Miro Haller <miro.haller@alumni.ethz.ch> because of the changed
+ * SGX-Step interface.
+ */
+
 #include <sgx_urts.h>
 #include "Enclave/encl_u.h"
 #include <sys/mman.h>
@@ -29,7 +34,7 @@
 void *a_pt;
 int fault_fired = 0, aep_fired = 0;
 
-void aep_cb_func(void)
+uint64_t aep_cb_func(void)
 {
     gprsgx_region_t gprsgx;
     uint64_t erip = edbgrd_erip() - (uint64_t) get_enclave_base();
@@ -39,6 +44,7 @@ void aep_cb_func(void)
     dump_gprsgx_region(&gprsgx);
 
     aep_fired++;
+    return 0;
 }
 
 void fault_handler(int signal)
