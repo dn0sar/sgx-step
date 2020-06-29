@@ -1,5 +1,4 @@
-# A Practical Attack Framework for Precise Enclave Execution Control
-## Slightly Adapted Version
+## Comments on differences from the original repo:
 This repository contains a slightly adapted version of [SGX-Step](https://github.com/jovanbulck/sgx-step) used for the [Frontal Attack](https://github.com/dn0sar/frontal_poc).
 
 The applied changes (and more) are motivated and explained in detail in [this](https://github.com/Miro-H/sgx-accurate-time-msrmts) bachelor thesis. The changed files are also marked in the code.
@@ -15,7 +14,8 @@ To run this application, use `make run` in the folder `app/bench-improved`. The 
 For debugging, we can set `EDBGRD = 1` in `app/bench-improved/Makefile.config` and run `make parse` to analyze the observed instructions based on the instruction pointer inside the enclave.
 
 
-## Original Readme
+## ====== Original Readme ======
+# A Practical Attack Framework for Precise Enclave Execution Control
 <img src="logo.svg" width=160 alt="logo" align="left" />
 
 SGX-Step is an open-source framework to facilitate side-channel attack research
