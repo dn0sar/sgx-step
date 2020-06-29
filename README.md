@@ -1,5 +1,21 @@
-# A Practical Attack Framework for Precise Enclave Execution Control
+## Comments on differences from the original repo:
+This repository contains a slightly adapted version of [SGX-Step](https://github.com/jovanbulck/sgx-step) used for the [Frontal Attack](https://github.com/dn0sar/frontal_poc).
 
+The applied changes (and more) are motivated and explained in detail in [this](https://github.com/Miro-H/sgx-accurate-time-msrmts) bachelor thesis. The changed files are also marked in the code.
+
+The application in the folder `app/bench-improved` provides a simple example of how the slightly changed library can be used by adapting the `MICROBENCH` attack of `app/bench`. `bench-improved` performs time measurements on a nopslide of varying size. It show cases the following improvements:
+- Better instruction serialization (with `cpuid`).
+- Reduced cache pollution due to (almost) constant time measurement code as well as delayed instruction filtering and logging.
+- Support for multiple pages of code.
+- Further consistency checks to detect faulty executions.
+- More precise control on the measured section of code.
+
+To run this application, use `make run` in the folder `app/bench-improved`. The APIC timer interval and other parameters can be configured directly in `app/bench-improved/Makefile.config`. Please refer to the [Frontal attack instructions](https://github.com/dn0sar/frontal_poc#configuration) on how to choose the correct parameters.
+For debugging, we can set `EDBGRD = 1` in `app/bench-improved/Makefile.config` and run `make parse` to analyze the observed instructions based on the instruction pointer inside the enclave.
+
+
+## ====== Original Readme ======
+# A Practical Attack Framework for Precise Enclave Execution Control
 <img src="logo.svg" width=160 alt="logo" align="left" />
 
 SGX-Step is an open-source framework to facilitate side-channel attack research
@@ -87,8 +103,8 @@ interrupting and resuming an SGX enclave through our framework.
 2. The processor executes the AEX procedure that securely stores execution
    context in the enclave’s SSA frame, initializes CPU registers, and vectors
    to the (user space) interrupt handler registered in the IDT.
-3. At this point, any attack-specific, spy code can easily be plugged in. 
-4. The library returns to the user space AEP trampoline. We modified the 
+3. At this point, any attack-specific, spy code can easily be plugged in.
+4. The library returns to the user space AEP trampoline. We modified the
    untrusted runtime of the official SGX SDK to allow easy registration of a
    custom AEP stub. Furthermore, to enable precise evaluation of our approach on
    attacker-controlled benchmark debug enclaves, SGX-Step can *optionally* be

@@ -18,6 +18,11 @@
  *  along with SGX-Step. If not, see <http://www.gnu.org/licenses/>.
  */
 
+/*
+ * Slighly adapted by Miro Haller <miro.haller@alumni.ethz.ch> because of the changed
+ * SGX-Step interface.
+ */
+
 #include <sgx_urts.h>
 #include "Enclave/encl_u.h"
 #include <signal.h>
@@ -52,7 +57,7 @@ uint64_t *pmd_encl = NULL;
 /* ================== ATTACKER IRQ/FAULT HANDLERS ================= */
 
 /* Called before resuming the enclave after an Asynchronous Enclave eXit. */
-void aep_cb_func(void)
+uint64_t aep_cb_func(void)
 {
     uint64_t erip = edbgrd_erip() - (uint64_t) get_enclave_base();
     info("^^ enclave RIP=%#llx; ACCESSED=%d", erip, ACCESSED(*pte_encl));
@@ -95,8 +100,9 @@ void aep_cb_func(void)
     if (do_irq)
     {
         *pmd_encl = MARK_NOT_ACCESSED( *pmd_encl );
-        apic_timer_irq( SGX_STEP_TIMER_INTERVAL );
+        return SGX_STEP_TIMER_INTERVAL;
     }
+    return 0;
 }
 
 /* Called upon SIGSEGV caused by untrusted page tables. */

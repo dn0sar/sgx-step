@@ -1,0 +1,6 @@
+app
+
+*.swp
+
+out.txt
+parsed_nop.txt
